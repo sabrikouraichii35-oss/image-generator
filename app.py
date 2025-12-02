@@ -1,70 +1,63 @@
-import io
-import base64
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-
 import torch
+from fastapi import FastAPI
+from pydantic import BaseModel
 from diffusers import StableDiffusionPipeline
 
-MODEL_ID = "SG161222/Realistic_Vision_V5.1_noVAE"
+app = FastAPI(title="Image Generator CPU")
 
-print("Loading Realistic Vision… (first time takes a few minutes)")
+MODEL_ID = "SG161222/Realistic_Vision_V5.1"
+
+
+# ============================================
+# LOAD MODEL — CPU-FRIENDLY VERSION
+# ============================================
+print("Loading model in CPU mode...")
+
+torch.set_grad_enabled(False)
 
 pipe = StableDiffusionPipeline.from_pretrained(
     MODEL_ID,
-    torch_dtype= torch.float32,
-    variant="fp16" if torch.cuda.is_available() else None,
-    safety_checker=None       # désactiver le filtre NSFW si tu le veux
+    torch_dtype=torch.float32,
+    safety_checker=None,
+    low_cpu_mem_usage=True
 )
 
-device = "cpu"
-pipe = pipe.to(device)
+# Important: CPU mode
+pipe.to("cpu")
 
-app = FastAPI(
-    title="Realistic Vision Image Generator API",
-    description="Génération d'images réalistes avec Realistic Vision 5.1",
-)
+# Optional but recommended
+try:
+    pipe.enable_model_cpu_offload()
+except:
+    pass
 
-class GenRequest(BaseModel):
+print("Model loaded.")
+
+
+# ============================================
+# API INPUT MODEL
+# ============================================
+class Prompt(BaseModel):
     prompt: str
-    negative_prompt: str = "blurry, low quality, distorted, watermark"
-    width: int = 512
-    height: int = 512
-    num_inference_steps: int = 25
-    guidance_scale: float = 7.0
-    seed: int | None = None
+    steps: int = 25
+    guidance: float = 7.0
 
+
+# ============================================
+# GENERATE ROUTE
+# ============================================
 @app.post("/generate")
-def generate(req: GenRequest):
-    try:
-        generator = torch.Generator(device=device)
-        if req.seed is not None:
-            generator = generator.manual_seed(req.seed)
+def generate(data: Prompt):
+    image = pipe(
+        data.prompt,
+        num_inference_steps=data.steps,
+        guidance_scale=data.guidance
+    ).images[0]
 
-        result = pipe(
-            prompt=req.prompt,
-            negative_prompt=req.negative_prompt,
-            width=req.width,
-            height=req.height,
-            num_inference_steps=req.num_inference_steps,
-            guidance_scale=req.guidance_scale,
-            generator=generator,
-        )
-
-        image = result.images[0]
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    # Convert to base64
+    # Convert to base64 for API output
+    import io, base64
     buf = io.BytesIO()
     image.save(buf, format="PNG")
-    b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+    img_base64 = base64.b64encode(buf.getvalue()).decode()
 
-    return JSONResponse({
-        "model": MODEL_ID,
-        "prompt": req.prompt,
-        "image_base64": b64
-    })
-
+    return {"image_base64": img_base64}
