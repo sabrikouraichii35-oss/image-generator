@@ -13,12 +13,12 @@ print("Loading Realistic Vision… (first time takes a few minutes)")
 
 pipe = StableDiffusionPipeline.from_pretrained(
     MODEL_ID,
-    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+    torch_dtype= torch.float32,
     variant="fp16" if torch.cuda.is_available() else None,
     safety_checker=None       # désactiver le filtre NSFW si tu le veux
 )
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cpu"
 pipe = pipe.to(device)
 
 app = FastAPI(
@@ -67,3 +67,4 @@ def generate(req: GenRequest):
         "prompt": req.prompt,
         "image_base64": b64
     })
+
