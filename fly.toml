@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for image-generator-8je3bg on 2025-12-02T23:38:32Z
+# fly.toml app configuration file generated for image-generator--t-0gw on 2025-12-02T23:47:50Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'image-generator-8je3bg'
+app = 'image-generator--t-0gw'
 primary_region = 'fra'
 
 [build]
@@ -20,4 +20,4 @@ primary_region = 'fra'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 8
-  memory_mb = 65536
+  memory_mb = 16384
