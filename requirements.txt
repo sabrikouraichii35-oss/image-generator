@@ -1,7 +1,8 @@
 fastapi
-uvicorn[standard]
-torch
+uvicorn
+torch==2.2.0
 transformers
 diffusers
 accelerate
+pillow
 safetensors
