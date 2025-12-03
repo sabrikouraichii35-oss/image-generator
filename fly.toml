@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for image-generator--t-0gw on 2025-12-02T23:47:50Z
+# fly.toml app configuration file generated for image-generator-okrusqmm on 2025-12-03T00:21:48Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'image-generator--t-0gw'
+app = 'image-generator-okrusqmm'
 primary_region = 'fra'
 
 [build]
